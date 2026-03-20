@@ -1305,19 +1305,18 @@
 
       container.innerHTML = html;
 
-      // Per-bit vote breakdown by round
-      const bitList = [
-        { key:'w_a',  name: bits.willmons.a.name,   e8key:'e8_w_a',  f4side:'left',  f4pick:'a', champSide:'a' },
-        { key:'w_b',  name: bits.willmons.b.name,   e8key:'e8_w_b',  f4side:'left',  f4pick:'a', champSide:'a' },
-        { key:'ds_a', name: bits.dicksaloon.a.name, e8key:'e8_ds_a', f4side:'left',  f4pick:'b', champSide:'a' },
-        { key:'ds_b', name: bits.dicksaloon.b.name, e8key:'e8_ds_b', f4side:'left',  f4pick:'b', champSide:'a' },
-        { key:'k_a',  name: bits.kellys.a.name,     e8key:'e8_k_a',  f4side:'right', f4pick:'a', champSide:'b' },
-        { key:'k_b',  name: bits.kellys.b.name,     e8key:'e8_k_b',  f4side:'right', f4pick:'a', champSide:'b' },
-        { key:'m_a',  name: bits.matts.a.name,      e8key:'e8_m_a',  f4side:'right', f4pick:'b', champSide:'b' },
-        { key:'m_b',  name: bits.matts.b.name,      e8key:'e8_m_b',  f4side:'right', f4pick:'b', champSide:'b' },
+      // Per-bit vote breakdown — 3 separate sections by round
+      const bitDefs = [
+        { key:'w_a',  name: bits.willmons.a.name,   e8key:'e8_w_a',  region:'willmons',   side:'a', f4side:'left',  f4pick:'a', champSide:'a' },
+        { key:'w_b',  name: bits.willmons.b.name,   e8key:'e8_w_b',  region:'willmons',   side:'b', f4side:'left',  f4pick:'a', champSide:'a' },
+        { key:'ds_a', name: bits.dicksaloon.a.name, e8key:'e8_ds_a', region:'dicksaloon', side:'a', f4side:'left',  f4pick:'b', champSide:'a' },
+        { key:'ds_b', name: bits.dicksaloon.b.name, e8key:'e8_ds_b', region:'dicksaloon', side:'b', f4side:'left',  f4pick:'b', champSide:'a' },
+        { key:'k_a',  name: bits.kellys.a.name,     e8key:'e8_k_a',  region:'kellys',     side:'a', f4side:'right', f4pick:'a', champSide:'b' },
+        { key:'k_b',  name: bits.kellys.b.name,     e8key:'e8_k_b',  region:'kellys',     side:'b', f4side:'right', f4pick:'a', champSide:'b' },
+        { key:'m_a',  name: bits.matts.a.name,      e8key:'e8_m_a',  region:'matts',      side:'a', f4side:'right', f4pick:'b', champSide:'b' },
+        { key:'m_b',  name: bits.matts.b.name,      e8key:'e8_m_b',  region:'matts',      side:'b', f4side:'right', f4pick:'b', champSide:'b' },
       ];
 
-      // Figure out which bits made Final Four and Championship based on vote leaders
       const e8Winners = {
         willmons:   (d['e8_w_a']||0) >= (d['e8_w_b']||0) ? 'a' : 'b',
         dicksaloon: (d['e8_ds_a']||0) >= (d['e8_ds_b']||0) ? 'a' : 'b',
@@ -1327,64 +1326,58 @@
       const f4LeftWinner  = (d['f4_left_a']||0) >= (d['f4_left_b']||0) ? 'a' : 'b';
       const f4RightWinner = (d['f4_right_a']||0) >= (d['f4_right_b']||0) ? 'a' : 'b';
       const champWinner   = (d['champ_a']||0) >= (d['champ_b']||0) ? 'a' : 'b';
+      const hasChampVotes = (d['champ_a']||0) + (d['champ_b']||0) > 0;
 
-      // Map f4 side+pick to region
-      const f4RegionMap = {
-        'left_a':  'willmons', 'left_b':  'dicksaloon',
-        'right_a': 'kellys',   'right_b': 'matts',
-      };
+      function renderRoundSection(title, rows) {
+        if(!rows.length) return '';
+        const sorted = [...rows].sort((a,b) => b.votes - a.votes);
+        let html = `<div style="margin-bottom:20px;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--teal);margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:6px;">${title}</div>`;
+        sorted.forEach(r => {
+          const isWinner = r.winner;
+          html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+            <span style="font-size:12px;color:${isWinner?'var(--teal)':'rgba(255,255,255,0.8)'};">${r.name}${isWinner?' 🔥':''}</span>
+            <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:${isWinner?'var(--teal)':'rgba(255,255,255,0.6)'};">${r.votes}</span>
+          </div>`;
+        });
+        html += '</div>';
+        return html;
+      }
 
-      let ptHtml = '<div style="display:flex;flex-direction:column;gap:14px;">';
-      bitList.forEach(bit => {
-        const e8Votes = d[bit.e8key] || 0;
+      // Elite 8 — all 8 bits
+      const e8Rows = bitDefs.map(b => ({
+        name: b.name,
+        votes: d[b.e8key] || 0,
+        winner: e8Winners[b.region] === b.side,
+      }));
 
-        // Did this bit make Final Four? Only if it won its Elite 8 matchup
-        const regionKey = bit.key.split('_')[0];
-        const sideKey = bit.key.split('_')[1];
-        const regionName = {w:'willmons',ds:'dicksaloon',k:'kellys',m:'matts'}[regionKey];
-        const madeF4 = e8Winners[regionName] === sideKey;
+      // Final Four — only the 4 bits that won Elite 8
+      const f4Rows = bitDefs
+        .filter(b => e8Winners[b.region] === b.side)
+        .map(b => ({
+          name: b.name,
+          votes: d[`f4_${b.f4side}_${b.f4pick}`] || 0,
+          winner: (b.f4side === 'left' ? f4LeftWinner : f4RightWinner) === b.f4pick,
+        }));
 
-        // F4 votes — only if this bit actually appeared in the Final Four
-        let f4Votes = null;
-        if(madeF4) {
-          const f4VoteKey = `f4_${bit.f4side}_${bit.f4pick}`;
-          f4Votes = d[f4VoteKey] || 0;
-        }
+      // Championship — only the 2 bits that won Final Four
+      const champRows = bitDefs
+        .filter(b => {
+          if(e8Winners[b.region] !== b.side) return false;
+          const f4Won = (b.f4side === 'left' ? f4LeftWinner : f4RightWinner) === b.f4pick;
+          return f4Won;
+        })
+        .map(b => ({
+          name: b.name,
+          votes: d[`champ_${b.champSide}`] || 0,
+          winner: hasChampVotes && champWinner === b.champSide,
+        }));
 
-        // Did this bit make Championship?
-        let champVotes = null;
-        if(madeF4) {
-          const f4SideWon = bit.f4side === 'left' ? f4LeftWinner : f4RightWinner;
-          const madeChamp = f4SideWon === bit.f4pick;
-          if(madeChamp) {
-            champVotes = d[`champ_${bit.champSide}`] || 0;
-          }
-        }
-
-        const isChamp = champVotes !== null && (
-          (bit.champSide === 'a' && champWinner === 'a') ||
-          (bit.champSide === 'b' && champWinner === 'b')
-        ) && (d['champ_a']||0) + (d['champ_b']||0) > 0;
-
-        ptHtml += `<div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:12px 14px;border:1px solid ${isChamp ? 'var(--teal)' : 'rgba(255,255,255,0.08)'}">
-          <div style="font-weight:600;color:${isChamp ? 'var(--teal)' : '#fff'};font-size:13px;margin-bottom:8px;">${bit.name}${isChamp ? ' 🏆' : ''}</div>
-          <div style="display:flex;gap:16px;flex-wrap:wrap;">
-            <div style="font-family:'DM Mono',monospace;font-size:11px;">
-              <span style="color:rgba(255,255,255,0.4)">Elite 8: </span>
-              <span style="color:var(--teal);font-weight:600;">${e8Votes} vote${e8Votes!==1?'s':''}</span>
-            </div>
-            <div style="font-family:'DM Mono',monospace;font-size:11px;">
-              <span style="color:rgba(255,255,255,0.4)">Final Four: </span>
-              <span style="color:${f4Votes!==null?'var(--teal)':'rgba(255,255,255,0.25)'};font-weight:600;">${f4Votes!==null?f4Votes+' vote'+(f4Votes!==1?'s':''):'—'}</span>
-            </div>
-            <div style="font-family:'DM Mono',monospace;font-size:11px;">
-              <span style="color:rgba(255,255,255,0.4)">Championship: </span>
-              <span style="color:${champVotes!==null?'var(--teal)':'rgba(255,255,255,0.25)'};font-weight:600;">${champVotes!==null?champVotes+' vote'+(champVotes!==1?'s':''):'—'}</span>
-            </div>
-          </div>
-        </div>`;
-      });
-      ptHtml += '</div>';
+      let ptHtml = '';
+      ptHtml += renderRoundSection('🏟 Elite 8', e8Rows);
+      ptHtml += renderRoundSection('🔥 Final Four', f4Rows);
+      ptHtml += renderRoundSection('🏆 Championship', champRows);
+      if(!ptHtml) ptHtml = '<div style="color:rgba(255,255,255,0.4);font-size:12px;text-align:center;padding:16px">No votes yet.</div>';
       pointsContainer.innerHTML = ptHtml;
 
     } catch(e) {
