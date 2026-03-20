@@ -604,6 +604,22 @@
   <p>Pick your winner from each region, advance your Final Four, and crown the BitMadness 2026 Champion.</p>
 </div>
 
+<!-- SUCCESS — shown after submit, positioned prominently -->
+<div class="success-state" id="success-state" style="display:none;margin:0;border-radius:0;border-left:none;border-right:none;padding:48px 24px;">
+  <div class="success-icon">🏆</div>
+  <h2>Bracket Submitted!</h2>
+  <p style="font-size:16px;font-weight:600;color:var(--green);margin-bottom:8px">Your picks are locked in!</p>
+  <p>Tune in Thursday to find out which bit the listeners — and the hosts — crowned as BitMadness 2026 Champion.</p>
+  <p style="margin-top:12px;font-style:italic">Spread the word — the more listeners who vote, the more powerful the collective voice!</p>
+  <div class="share-box" style="margin-top:20px">
+    <div class="share-label">Share the vote</div>
+    <div class="share-row">
+      <span class="share-url">https://tinyurl.com/5ewn6krw</span>
+      <button class="btn-copy" onclick="navigator.clipboard.writeText('https://tinyurl.com/5ewn6krw').then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='Copy Link',2000)})">Copy Link</button>
+    </div>
+  </div>
+</div>
+
 <div class="main" id="main-content">
 
   <!-- EMAIL GATE -->
@@ -828,21 +844,7 @@
 
   </div><!-- end ballot -->
 
-  <!-- SUCCESS -->
-  <div class="success-state" id="success-state" style="display:none">
-    <div class="success-icon">🏆</div>
-    <h2>Bracket Submitted!</h2>
-    <p style="font-size:16px;font-weight:600;color:var(--green);margin-bottom:8px">Your picks are locked in!</p>
-    <p>Tune in Thursday to find out which bit the listeners — and the hosts — crowned as BitMadness 2026 Champion.</p>
-    <p style="margin-top:12px;font-style:italic">Spread the word — the more listeners who vote, the more powerful the collective voice!</p>
-    <div class="share-box">
-      <div class="share-label">Share the vote</div>
-      <div class="share-row">
-        <span class="share-url">https://tinyurl.com/5ewn6krw</span>
-        <button class="btn-copy" onclick="navigator.clipboard.writeText('https://tinyurl.com/5ewn6krw').then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='Copy Link',2000)})">Copy Link</button>
-      </div>
-    </div>
-  </div>
+
 
   <!-- ADMIN -->
   <div class="admin-toggle">
