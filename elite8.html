@@ -1164,8 +1164,9 @@
 
       document.getElementById('ballot').style.display = 'none';
       document.getElementById('submit-section').style.display = 'none';
-      document.getElementById('success-state').style.display = 'block';
-      window.scrollTo({top:0,behavior:'smooth'});
+      const successEl = document.getElementById('success-state');
+      successEl.style.display = 'block';
+      setTimeout(() => successEl.scrollIntoView({behavior:'smooth', block:'center'}), 100);
 
     } catch(e) {
       console.error(e);
