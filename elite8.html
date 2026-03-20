@@ -1174,11 +1174,7 @@
         await updateDoc(tallyRef, updates);
       }
 
-      document.getElementById('ballot').style.display = 'none';
-      document.getElementById('submit-section').style.display = 'none';
-      document.getElementById('ballot').style.display = 'none';
-      document.getElementById('success-state').style.display = 'block';
-      window.scrollTo({top:0,behavior:'smooth'});
+      window.location.href = 'thankyou.html';
 
     } catch(e) {
       console.error(e);
