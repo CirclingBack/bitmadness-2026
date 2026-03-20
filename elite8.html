@@ -1305,21 +1305,86 @@
 
       container.innerHTML = html;
 
-      // Points leaderboard
-      const ptKeys = ['w_a','w_b','ds_a','ds_b','k_a','k_b','m_a','m_b'];
-      const regionNames = { w:'Willmon\'s', ds:'Dick Saloon', k:"Kelly's", m:"Matt's El Rancho" };
-      const ptRows = ptKeys.map(k => {
-        const [r,s] = k.split('_');
-        const bitData = { w: bits.willmons, ds: bits.dicksaloon, k: bits.kellys, m: bits.matts }[r];
-        const name = bitData ? bitData[s].name : k;
-        return { key: k, name, pts: d[`pts_${k}`]||0 };
-      }).sort((a,b) => b.pts - a.pts);
+      // Per-bit vote breakdown by round
+      const bitList = [
+        { key:'w_a',  name: bits.willmons.a.name,   e8key:'e8_w_a',  f4side:'left',  f4pick:'a', champSide:'a' },
+        { key:'w_b',  name: bits.willmons.b.name,   e8key:'e8_w_b',  f4side:'left',  f4pick:'a', champSide:'a' },
+        { key:'ds_a', name: bits.dicksaloon.a.name, e8key:'e8_ds_a', f4side:'left',  f4pick:'b', champSide:'a' },
+        { key:'ds_b', name: bits.dicksaloon.b.name, e8key:'e8_ds_b', f4side:'left',  f4pick:'b', champSide:'a' },
+        { key:'k_a',  name: bits.kellys.a.name,     e8key:'e8_k_a',  f4side:'right', f4pick:'a', champSide:'b' },
+        { key:'k_b',  name: bits.kellys.b.name,     e8key:'e8_k_b',  f4side:'right', f4pick:'a', champSide:'b' },
+        { key:'m_a',  name: bits.matts.a.name,      e8key:'e8_m_a',  f4side:'right', f4pick:'b', champSide:'b' },
+        { key:'m_b',  name: bits.matts.b.name,      e8key:'e8_m_b',  f4side:'right', f4pick:'b', champSide:'b' },
+      ];
 
-      let ptHtml = '<table class="points-table"><thead><tr><th>#</th><th>BIT</th><th>TOTAL PTS</th></tr></thead><tbody>';
-      ptRows.forEach((r,i) => {
-        ptHtml += `<tr><td style="color:rgba(255,255,255,0.4)">${i+1}</td><td>${r.name}</td><td class="pts-gold">${r.pts}</td></tr>`;
+      // Figure out which bits made Final Four and Championship based on vote leaders
+      const e8Winners = {
+        willmons:   (d['e8_w_a']||0) >= (d['e8_w_b']||0) ? 'a' : 'b',
+        dicksaloon: (d['e8_ds_a']||0) >= (d['e8_ds_b']||0) ? 'a' : 'b',
+        kellys:     (d['e8_k_a']||0) >= (d['e8_k_b']||0) ? 'a' : 'b',
+        matts:      (d['e8_m_a']||0) >= (d['e8_m_b']||0) ? 'a' : 'b',
+      };
+      const f4LeftWinner  = (d['f4_left_a']||0) >= (d['f4_left_b']||0) ? 'a' : 'b';
+      const f4RightWinner = (d['f4_right_a']||0) >= (d['f4_right_b']||0) ? 'a' : 'b';
+      const champWinner   = (d['champ_a']||0) >= (d['champ_b']||0) ? 'a' : 'b';
+
+      // Map f4 side+pick to region
+      const f4RegionMap = {
+        'left_a':  'willmons', 'left_b':  'dicksaloon',
+        'right_a': 'kellys',   'right_b': 'matts',
+      };
+
+      let ptHtml = '<div style="display:flex;flex-direction:column;gap:14px;">';
+      bitList.forEach(bit => {
+        const e8Votes = d[bit.e8key] || 0;
+
+        // Did this bit make Final Four? Only if it won its Elite 8 matchup
+        const regionKey = bit.key.split('_')[0];
+        const sideKey = bit.key.split('_')[1];
+        const regionName = {w:'willmons',ds:'dicksaloon',k:'kellys',m:'matts'}[regionKey];
+        const madeF4 = e8Winners[regionName] === sideKey;
+
+        // F4 votes — only if this bit actually appeared in the Final Four
+        let f4Votes = null;
+        if(madeF4) {
+          const f4VoteKey = `f4_${bit.f4side}_${bit.f4pick}`;
+          f4Votes = d[f4VoteKey] || 0;
+        }
+
+        // Did this bit make Championship?
+        let champVotes = null;
+        if(madeF4) {
+          const f4SideWon = bit.f4side === 'left' ? f4LeftWinner : f4RightWinner;
+          const madeChamp = f4SideWon === bit.f4pick;
+          if(madeChamp) {
+            champVotes = d[`champ_${bit.champSide}`] || 0;
+          }
+        }
+
+        const isChamp = champVotes !== null && (
+          (bit.champSide === 'a' && champWinner === 'a') ||
+          (bit.champSide === 'b' && champWinner === 'b')
+        ) && (d['champ_a']||0) + (d['champ_b']||0) > 0;
+
+        ptHtml += `<div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:12px 14px;border:1px solid ${isChamp ? 'var(--teal)' : 'rgba(255,255,255,0.08)'}">
+          <div style="font-weight:600;color:${isChamp ? 'var(--teal)' : '#fff'};font-size:13px;margin-bottom:8px;">${bit.name}${isChamp ? ' 🏆' : ''}</div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;">
+            <div style="font-family:'DM Mono',monospace;font-size:11px;">
+              <span style="color:rgba(255,255,255,0.4)">Elite 8: </span>
+              <span style="color:var(--teal);font-weight:600;">${e8Votes} vote${e8Votes!==1?'s':''}</span>
+            </div>
+            <div style="font-family:'DM Mono',monospace;font-size:11px;">
+              <span style="color:rgba(255,255,255,0.4)">Final Four: </span>
+              <span style="color:${f4Votes!==null?'var(--teal)':'rgba(255,255,255,0.25)'};font-weight:600;">${f4Votes!==null?f4Votes+' vote'+(f4Votes!==1?'s':''):'—'}</span>
+            </div>
+            <div style="font-family:'DM Mono',monospace;font-size:11px;">
+              <span style="color:rgba(255,255,255,0.4)">Championship: </span>
+              <span style="color:${champVotes!==null?'var(--teal)':'rgba(255,255,255,0.25)'};font-weight:600;">${champVotes!==null?champVotes+' vote'+(champVotes!==1?'s':''):'—'}</span>
+            </div>
+          </div>
+        </div>`;
       });
-      ptHtml += '</tbody></table>';
+      ptHtml += '</div>';
       pointsContainer.innerHTML = ptHtml;
 
     } catch(e) {
