@@ -1317,60 +1317,40 @@
         { key:'m_b',  name: bits.matts.b.name,      e8key:'e8_m_b',  region:'matts',      side:'b', f4side:'right', f4pick:'b', champSide:'b' },
       ];
 
-      const e8Winners = {
-        willmons:   (d['e8_w_a']||0) >= (d['e8_w_b']||0) ? 'a' : 'b',
-        dicksaloon: (d['e8_ds_a']||0) >= (d['e8_ds_b']||0) ? 'a' : 'b',
-        kellys:     (d['e8_k_a']||0) >= (d['e8_k_b']||0) ? 'a' : 'b',
-        matts:      (d['e8_m_a']||0) >= (d['e8_m_b']||0) ? 'a' : 'b',
-      };
-      const f4LeftWinner  = (d['f4_left_a']||0) >= (d['f4_left_b']||0) ? 'a' : 'b';
-      const f4RightWinner = (d['f4_right_a']||0) >= (d['f4_right_b']||0) ? 'a' : 'b';
-      const champWinner   = (d['champ_a']||0) >= (d['champ_b']||0) ? 'a' : 'b';
-      const hasChampVotes = (d['champ_a']||0) + (d['champ_b']||0) > 0;
-
       function renderRoundSection(title, rows) {
-        if(!rows.length) return '';
         const sorted = [...rows].sort((a,b) => b.votes - a.votes);
+        const maxVotes = sorted[0]?.votes || 0;
         let html = `<div style="margin-bottom:20px;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--teal);margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:6px;">${title}</div>`;
         sorted.forEach(r => {
-          const isWinner = r.winner;
+          const isTop = r.votes > 0 && r.votes === maxVotes;
           html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-            <span style="font-size:12px;color:${isWinner?'var(--teal)':'rgba(255,255,255,0.8)'};">${r.name}${isWinner?' 🔥':''}</span>
-            <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:${isWinner?'var(--teal)':'rgba(255,255,255,0.6)'};">${r.votes}</span>
+            <span style="font-size:12px;color:${isTop?'var(--teal)':'rgba(255,255,255,0.8)'};">${r.name}${isTop?' 🔥':''}</span>
+            <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:${r.votes>0?(isTop?'var(--teal)':'rgba(255,255,255,0.6)'):'rgba(255,255,255,0.2)'};">${r.votes}</span>
           </div>`;
         });
         html += '</div>';
         return html;
       }
 
-      // Elite 8 — all 8 bits
+      // Elite 8 — raw votes per bit
       const e8Rows = bitDefs.map(b => ({
         name: b.name,
         votes: d[b.e8key] || 0,
-        winner: e8Winners[b.region] === b.side,
       }));
 
-      // Final Four — all 8 bits, 0 if they didn't advance
-      const f4Rows = bitDefs.map(b => {
-        const advanced = e8Winners[b.region] === b.side;
-        return {
-          name: b.name,
-          votes: advanced ? (d[`f4_${b.f4side}_${b.f4pick}`] || 0) : 0,
-          winner: advanced && (b.f4side === 'left' ? f4LeftWinner : f4RightWinner) === b.f4pick,
-        };
-      });
+      // Final Four — each bit's raw f4 votes (summed across both matchups they could appear in)
+      // w_a and ds_a both contribute to f4_left_a, etc. — so we show the f4 slot votes per bit
+      const f4Rows = bitDefs.map(b => ({
+        name: b.name,
+        votes: d[`f4_${b.f4side}_${b.f4pick}`] || 0,
+      }));
 
-      // Championship — all 8 bits, 0 if they didn't make it
-      const champRows = bitDefs.map(b => {
-        const advanced = e8Winners[b.region] === b.side;
-        const f4Won = advanced && (b.f4side === 'left' ? f4LeftWinner : f4RightWinner) === b.f4pick;
-        return {
-          name: b.name,
-          votes: f4Won ? (d[`champ_${b.champSide}`] || 0) : 0,
-          winner: f4Won && hasChampVotes && champWinner === b.champSide,
-        };
-      });
+      // Championship — each bit maps to champ_a or champ_b slot
+      const champRows = bitDefs.map(b => ({
+        name: b.name,
+        votes: d[`champ_${b.champSide}`] || 0,
+      }));
 
       let ptHtml = '';
       ptHtml += renderRoundSection('🏟 Elite 8', e8Rows);
