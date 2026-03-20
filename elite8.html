@@ -1351,27 +1351,26 @@
         winner: e8Winners[b.region] === b.side,
       }));
 
-      // Final Four — only the 4 bits that won Elite 8
-      const f4Rows = bitDefs
-        .filter(b => e8Winners[b.region] === b.side)
-        .map(b => ({
+      // Final Four — all 8 bits, 0 if they didn't advance
+      const f4Rows = bitDefs.map(b => {
+        const advanced = e8Winners[b.region] === b.side;
+        return {
           name: b.name,
-          votes: d[`f4_${b.f4side}_${b.f4pick}`] || 0,
-          winner: (b.f4side === 'left' ? f4LeftWinner : f4RightWinner) === b.f4pick,
-        }));
+          votes: advanced ? (d[`f4_${b.f4side}_${b.f4pick}`] || 0) : 0,
+          winner: advanced && (b.f4side === 'left' ? f4LeftWinner : f4RightWinner) === b.f4pick,
+        };
+      });
 
-      // Championship — only the 2 bits that won Final Four
-      const champRows = bitDefs
-        .filter(b => {
-          if(e8Winners[b.region] !== b.side) return false;
-          const f4Won = (b.f4side === 'left' ? f4LeftWinner : f4RightWinner) === b.f4pick;
-          return f4Won;
-        })
-        .map(b => ({
+      // Championship — all 8 bits, 0 if they didn't make it
+      const champRows = bitDefs.map(b => {
+        const advanced = e8Winners[b.region] === b.side;
+        const f4Won = advanced && (b.f4side === 'left' ? f4LeftWinner : f4RightWinner) === b.f4pick;
+        return {
           name: b.name,
-          votes: d[`champ_${b.champSide}`] || 0,
-          winner: hasChampVotes && champWinner === b.champSide,
-        }));
+          votes: f4Won ? (d[`champ_${b.champSide}`] || 0) : 0,
+          winner: f4Won && hasChampVotes && champWinner === b.champSide,
+        };
+      });
 
       let ptHtml = '';
       ptHtml += renderRoundSection('🏟 Elite 8', e8Rows);
