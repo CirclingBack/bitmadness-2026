@@ -1252,45 +1252,6 @@
       });
       html += '</div>';
 
-      // Final Four results
-      html += '<div class="results-round"><h3>Final Four</h3>';
-      [
-        { id:'f4-left', label:"Left (Willmon's / Dick Saloon)", la:'Left A wins', lb:'Left B wins', ka:'f4_left_a', kb:'f4_left_b' },
-        { id:'f4-right', label:"Right (Kelly's / Matt's El Rancho)", la:'Right A wins', lb:'Right B wins', ka:'f4_right_a', kb:'f4_right_b' },
-      ].forEach(m => {
-        const av=d[m.ka]||0, bv=d[m.kb]||0, tot=av+bv||1;
-        const ap=Math.round(av/tot*100), bp=100-ap, aW=av>=bv;
-        html += `<div class="result-row"><div class="result-bits"><div style="margin-bottom:2px;color:rgba(255,255,255,0.8)">${m.label}</div></div>
-          <div class="result-reveal-area">
-            <div id="result-${m.id}" style="display:none">
-              <div class="result-bar-area">
-                <div class="result-bar-row"><span class="result-bar-label">A</span><div class="result-bar" style="width:${Math.round(ap/100*maxBar)}px;background:${aW?'#5dada8':'#c94040'}"></div><span class="result-count">${av}</span><span class="result-count" style="color:${aW?'var(--teal)':'#c94040'}">${ap}%</span></div>
-                <div class="result-bar-row"><span class="result-bar-label">B</span><div class="result-bar" style="width:${Math.round(bp/100*maxBar)}px;background:${!aW?'#5dada8':'#c94040'}"></div><span class="result-count">${bv}</span><span class="result-count" style="color:${!aW?'var(--teal)':'#c94040'}">${bp}%</span></div>
-              </div>
-            </div>
-            <button class="btn-reveal" id="btn-${m.id}" onclick="revealResult('${m.id}')">🎬 Reveal</button>
-          </div>
-        </div>`;
-      });
-      html += '</div>';
-
-      // Championship
-      html += '<div class="results-round"><h3>Championship</h3>';
-      const ca=d['champ_a']||0, cb=d['champ_b']||0, ct=ca+cb||1;
-      const cap=Math.round(ca/ct*100), cbp=100-cap, caW=ca>=cb;
-      html += `<div class="result-row"><div class="result-bits"><div style="color:rgba(255,255,255,0.8)">Championship Vote</div></div>
-        <div class="result-reveal-area">
-          <div id="result-champ" style="display:none">
-            <div class="result-bar-area">
-              <div class="result-bar-row"><span class="result-bar-label">A</span><div class="result-bar" style="width:${Math.round(cap/100*maxBar)}px;background:${caW?'#5dada8':'#c94040'}"></div><span class="result-count">${ca}</span><span class="result-count" style="color:${caW?'var(--teal)':'#c94040'}">${cap}%</span></div>
-              <div class="result-bar-row"><span class="result-bar-label">B</span><div class="result-bar" style="width:${Math.round(cbp/100*maxBar)}px;background:${!caW?'#5dada8':'#c94040'}"></div><span class="result-count">${cb}</span><span class="result-count" style="color:${!caW?'var(--teal)':'#c94040'}">${cbp}%</span></div>
-            </div>
-          </div>
-          <button class="btn-reveal" id="btn-champ" onclick="revealResult('champ')">🎬 Reveal</button>
-        </div>
-      </div>`;
-      html += '</div>';
-
       container.innerHTML = html;
 
       // Per-bit vote breakdown — 3 separate sections by round
