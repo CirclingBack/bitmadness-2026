@@ -1123,37 +1123,28 @@
         return;
       }
 
-      // Build point tallies
-      // Elite 8 winners get 1 pt each (Final Four = 1 pt)
-      // Final Four winners get 3 pts each (Championship game = 3 pts)
-      // Champion gets 5 pts
       const updates = { totalVoters: increment(1) };
 
-      const regionMap = { willmons: 'w', dicksaloon: 'ds', kellys: 'k', matts: 'm' };
+      const regionKey = { willmons: 'w', dicksaloon: 'ds', kellys: 'k', matts: 'm' };
 
-      // Elite 8 picks → 1pt each for making Final Four
+      // Elite 8 — one unique key per bit: e8_w_a, e8_ds_b, etc.
       for(const [region, side] of Object.entries(picks.elite8)) {
-        const key = `e8_${regionMap[region]}_${side}`;
-        updates[key] = increment(1);
-        updates[`e8_${regionMap[region]}_total`] = increment(1);
-        updates[`pts_${getBitKey(region, side)}`] = increment(PTS_FINAL4);
+        updates[`e8_${regionKey[region]}_${side}`] = increment(1);
       }
 
-      // Final Four picks → 3pts each for making Championship
-      const leftWinnerRegion = picks.final4['left'] === 'a' ? 'willmons' : 'dicksaloon';
-      const rightWinnerRegion = picks.final4['right'] === 'a' ? 'kellys' : 'matts';
-      const leftWinnerSide = picks.elite8[leftWinnerRegion];
-      const rightWinnerSide = picks.elite8[rightWinnerRegion];
-      updates[`f4_left_${picks.final4['left']}`] = increment(1);
-      updates[`f4_right_${picks.final4['right']}`] = increment(1);
-      updates[`pts_${getBitKey(leftWinnerRegion, leftWinnerSide)}`] = increment(PTS_CHAMP_GAME);
-      updates[`pts_${getBitKey(rightWinnerRegion, rightWinnerSide)}`] = increment(PTS_CHAMP_GAME);
+      // Final Four — track the specific bit that was advanced
+      // left side: willmons winner vs dicksaloon winner
+      const leftRegion  = picks.final4['left']  === 'a' ? 'willmons'   : 'dicksaloon';
+      const rightRegion = picks.final4['right'] === 'a' ? 'kellys'     : 'matts';
+      const leftSide    = picks.elite8[leftRegion];
+      const rightSide   = picks.elite8[rightRegion];
+      updates[`f4_${regionKey[leftRegion]}_${leftSide}`]   = increment(1);
+      updates[`f4_${regionKey[rightRegion]}_${rightSide}`] = increment(1);
 
-      // Championship pick → 5pts
-      const champRegion = picks.champ === 'a' ? leftWinnerRegion : rightWinnerRegion;
-      const champSide = picks.champ === 'a' ? leftWinnerSide : rightWinnerSide;
-      updates[`champ_${picks.champ}`] = increment(1);
-      updates[`pts_${getBitKey(champRegion, champSide)}`] = increment(PTS_CHAMPION);
+      // Championship — track the specific bit voted as champion
+      const champRegion = picks.champ === 'a' ? leftRegion  : rightRegion;
+      const champSide   = picks.champ === 'a' ? leftSide    : rightSide;
+      updates[`champ_${regionKey[champRegion]}_${champSide}`] = increment(1);
 
       // Save
       await setDoc(voteRef, { ts: new Date().toISOString(), picks });
@@ -1193,10 +1184,7 @@
     }
   };
 
-  function getBitKey(region, side) {
-    const r = { willmons:'w', dicksaloon:'ds', kellys:'k', matts:'m' };
-    return `${r[region]}_${side}`;
-  }
+
 
   // ADMIN
   window.toggleAdmin = function() {
@@ -1307,14 +1295,14 @@
 
       // Per-bit vote breakdown — 3 separate sections by round
       const bitDefs = [
-        { key:'w_a',  name: bits.willmons.a.name,   e8key:'e8_w_a',  region:'willmons',   side:'a', f4side:'left',  f4pick:'a', champSide:'a' },
-        { key:'w_b',  name: bits.willmons.b.name,   e8key:'e8_w_b',  region:'willmons',   side:'b', f4side:'left',  f4pick:'a', champSide:'a' },
-        { key:'ds_a', name: bits.dicksaloon.a.name, e8key:'e8_ds_a', region:'dicksaloon', side:'a', f4side:'left',  f4pick:'b', champSide:'a' },
-        { key:'ds_b', name: bits.dicksaloon.b.name, e8key:'e8_ds_b', region:'dicksaloon', side:'b', f4side:'left',  f4pick:'b', champSide:'a' },
-        { key:'k_a',  name: bits.kellys.a.name,     e8key:'e8_k_a',  region:'kellys',     side:'a', f4side:'right', f4pick:'a', champSide:'b' },
-        { key:'k_b',  name: bits.kellys.b.name,     e8key:'e8_k_b',  region:'kellys',     side:'b', f4side:'right', f4pick:'a', champSide:'b' },
-        { key:'m_a',  name: bits.matts.a.name,      e8key:'e8_m_a',  region:'matts',      side:'a', f4side:'right', f4pick:'b', champSide:'b' },
-        { key:'m_b',  name: bits.matts.b.name,      e8key:'e8_m_b',  region:'matts',      side:'b', f4side:'right', f4pick:'b', champSide:'b' },
+        { key:'w_a',  rkey:'w',  name: bits.willmons.a.name,   e8key:'e8_w_a',  region:'willmons',   side:'a', f4side:'left',  f4pick:'a', champSide:'a' },
+        { key:'w_b',  rkey:'w',  name: bits.willmons.b.name,   e8key:'e8_w_b',  region:'willmons',   side:'b', f4side:'left',  f4pick:'a', champSide:'a' },
+        { key:'ds_a', rkey:'ds', name: bits.dicksaloon.a.name, e8key:'e8_ds_a', region:'dicksaloon', side:'a', f4side:'left',  f4pick:'b', champSide:'a' },
+        { key:'ds_b', rkey:'ds', name: bits.dicksaloon.b.name, e8key:'e8_ds_b', region:'dicksaloon', side:'b', f4side:'left',  f4pick:'b', champSide:'a' },
+        { key:'k_a',  rkey:'k',  name: bits.kellys.a.name,     e8key:'e8_k_a',  region:'kellys',     side:'a', f4side:'right', f4pick:'a', champSide:'b' },
+        { key:'k_b',  rkey:'k',  name: bits.kellys.b.name,     e8key:'e8_k_b',  region:'kellys',     side:'b', f4side:'right', f4pick:'a', champSide:'b' },
+        { key:'m_a',  rkey:'m',  name: bits.matts.a.name,      e8key:'e8_m_a',  region:'matts',      side:'a', f4side:'right', f4pick:'b', champSide:'b' },
+        { key:'m_b',  rkey:'m',  name: bits.matts.b.name,      e8key:'e8_m_b',  region:'matts',      side:'b', f4side:'right', f4pick:'b', champSide:'b' },
       ];
 
       function renderRoundSection(title, rows) {
@@ -1333,23 +1321,22 @@
         return html;
       }
 
-      // Elite 8 — raw votes per bit
+      // Elite 8 — unique key per bit
       const e8Rows = bitDefs.map(b => ({
         name: b.name,
         votes: d[b.e8key] || 0,
       }));
 
-      // Final Four — each bit's raw f4 votes (summed across both matchups they could appear in)
-      // w_a and ds_a both contribute to f4_left_a, etc. — so we show the f4 slot votes per bit
+      // Final Four — unique key per bit: f4_w_a, f4_ds_b, etc.
       const f4Rows = bitDefs.map(b => ({
         name: b.name,
-        votes: d[`f4_${b.f4side}_${b.f4pick}`] || 0,
+        votes: d[`f4_${b.rkey}_${b.side}`] || 0,
       }));
 
-      // Championship — each bit maps to champ_a or champ_b slot
+      // Championship — unique key per bit: champ_w_a, champ_ds_b, etc.
       const champRows = bitDefs.map(b => ({
         name: b.name,
-        votes: d[`champ_${b.champSide}`] || 0,
+        votes: d[`champ_${b.rkey}_${b.side}`] || 0,
       }));
 
       let ptHtml = '';
