@@ -493,7 +493,7 @@
   <!-- INTRO -->
   <div class="intro-card">
     <h2>Your Vote Matters — Round 2 Voting</h2>
-    <p>Vote on all 32 first-round matchups below. The listener vote is weighted <strong>2x</strong> — so your collective voice carries real weight in deciding which bits move on to Round 2. Dillon, Dave & Randy each get 1 vote. You get 2.</p>
+    <p>Vote on all 16 Round 2 matchups below. The listener vote is weighted <strong>2x</strong> — so your collective voice carries real weight in deciding which bits move on to Round 2. Dillon, Dave & Randy each get 1 vote. You get 2.</p>
     <div class="vote-weight">
       <span class="weight-pill">🎙 Dillon = 1 pt</span>
       <span class="weight-pill">🎙 Dave = 1 pt</span>
@@ -696,7 +696,7 @@
     <!-- SUBMIT -->
     <div class="submit-section" id="submit-section">
       <h3>Submit Your Bracket</h3>
-      <div class="progress-text" id="progress-text">0 of 32 matchups selected</div>
+      <div class="progress-text" id="progress-text">0 of 16 matchups selected</div>
       <div class="progress-bar-wrap">
         <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
       </div>
@@ -760,7 +760,7 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  const TOTAL_MATCHUPS = 32;
+  const TOTAL_MATCHUPS = 16;
   let picks = {};
   let voterEmail = '';
   let adminUnlocked = false;
