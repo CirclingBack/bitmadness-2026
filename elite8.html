@@ -1272,20 +1272,25 @@
         { key:'m_b',  rkey:'m',  name: bits.matts.b.name,      e8key:'e8_m_b',  region:'matts',      side:'b', f4side:'right', f4pick:'b', champSide:'b' },
       ];
 
+      let revealSectionCount = 0;
       function renderRoundSection(title, rows) {
+        const sectionId = 'reveal-section-' + (++revealSectionCount);
+        const btnId = 'reveal-btn-' + revealSectionCount;
         const sorted = [...rows].sort((a,b) => b.votes - a.votes);
         const maxVotes = sorted[0]?.votes || 0;
-        let html = `<div style="margin-bottom:20px;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--teal);margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:6px;">${title}</div>`;
+        let inner = '';
         sorted.forEach(r => {
           const isTop = r.votes > 0 && r.votes === maxVotes;
-          html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+          inner += `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
             <span style="font-size:12px;color:${isTop?'var(--teal)':'rgba(255,255,255,0.8)'};">${r.name}${isTop?' 🔥':''}</span>
             <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:${r.votes>0?(isTop?'var(--teal)':'rgba(255,255,255,0.6)'):'rgba(255,255,255,0.2)'};">${r.votes}</span>
           </div>`;
         });
-        html += '</div>';
-        return html;
+        return `<div style="margin-bottom:20px;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--teal);margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:6px;">${title}</div>
+          <button id="${btnId}" onclick="document.getElementById('${sectionId}').style.display='block';document.getElementById('${btnId}').style.display='none';" style="background:var(--teal);color:#fff;border:none;padding:8px 20px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;margin-bottom:8px;">🎬 Reveal ${title}</button>
+          <div id="${sectionId}" style="display:none">${inner}</div>
+        </div>`;
       }
 
       // Elite 8 — unique key per bit
